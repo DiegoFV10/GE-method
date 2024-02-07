@@ -79,9 +79,10 @@ action() {
     [ -z "$CMT_PYTHON_VERSION" ] && export CMT_PYTHON_VERSION="3"
 
     # specific eos dirs
-    [ -z "$CMT_STORE_EOS_PREPROCESSING" ] && export CMT_STORE_EOS_PREPROCESSING="$CMT_STORE_EOS"
-    [ -z "$CMT_STORE_EOS_CATEGORIZATION" ] && export CMT_STORE_EOS_CATEGORIZATION="$CMT_STORE_EOS"
-    [ -z "$CMT_STORE_EOS_MERGECATEGORIZATION" ] && export CMT_STORE_EOS_MERGECATEGORIZATION="$CMT_STORE_EOS"
+    export CMT_STORE_EOS_MUOPOG="/eos/cms/store/group/phys_muon/diegof/cmt"
+    [ -z "$CMT_STORE_EOS_PREPROCESSING" ] && export CMT_STORE_EOS_PREPROCESSING="$CMT_STORE_EOS_MUOPOG"
+    [ -z "$CMT_STORE_EOS_CATEGORIZATION" ] && export CMT_STORE_EOS_CATEGORIZATION="$CMT_STORE_EOS_MUOPOG"
+    [ -z "$CMT_STORE_EOS_MERGECATEGORIZATION" ] && export CMT_STORE_EOS_MERGECATEGORIZATION="$CMT_STORE_EOS_MUOPOG"
     [ -z "$CMT_STORE_EOS_SHARDS" ] && export CMT_STORE_EOS_SHARDS="$CMT_STORE_EOS"
     [ -z "$CMT_STORE_EOS_EVALUATION" ] && export CMT_STORE_EOS_EVALUATION="$CMT_STORE_EOS"
     if [ -n "$CMT_CIEMAT_USER" ]; then
@@ -360,6 +361,9 @@ action() {
         fi
     fi
 
+    # Set tmp dir for MergeCategorization                                                                                                
+    export LAW_TARGET_TMP_DIR="/eos/cms/store/group/phys_muon/diegof/tmp/"
+    
     # try to source the law completion script when available
     which law &> /dev/null && source "$( law completion )" ""
 }

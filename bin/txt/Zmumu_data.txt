@@ -1,0 +1,11 @@
+/eos/user/d/diegof/cmt/MergeCategorization/GEMethod_config/Zmumu_M-50to120/cat_preselection_UL18/GEM_FULL1/data_0.root
+/eos/user/d/diegof/cmt/MergeCategorization/GEMethod_config/Zmumu_M-120to200/cat_preselection_UL18/GEM_FULL1/data_0.root
+/eos/user/d/diegof/cmt/MergeCategorization/GEMethod_config/Zmumu_M-200to400/cat_preselection_UL18/GEM_FULL1/data_0.root
+/eos/user/d/diegof/cmt/MergeCategorization/GEMethod_config/Zmumu_M-400to800/cat_preselection_UL18/GEM_FULL1/data_0.root
+/eos/user/d/diegof/cmt/MergeCategorization/GEMethod_config/Zmumu_M-800to1400/cat_preselection_UL18/GEM_FULL1/data_0.root
+/eos/user/d/diegof/cmt/MergeCategorization/GEMethod_config/Zmumu_M-1400to2300/cat_preselection_UL18/GEM_FULL1/data_0.root
+/eos/user/d/diegof/cmt/MergeCategorization/GEMethod_config/Zmumu_M-2300to3500/cat_preselection_UL18/GEM_FULL1/data_0.root
+/eos/user/d/diegof/cmt/MergeCategorization/GEMethod_config/Zmumu_M-3500to4500/cat_preselection_UL18/GEM_FULL1/data_0.root
+/eos/user/d/diegof/cmt/MergeCategorization/GEMethod_config/Zmumu_M-4500to6000/cat_preselection_UL18/GEM_FULL1/data_0.root
+/eos/user/d/diegof/cmt/MergeCategorization/GEMethod_config/Zmumu_M-6000toInf/cat_preselection_UL18/GEM_FULL1/data_0.root
+

@@ -1,0 +1,186 @@
+
+Processing chi2Plot.cpp...
+File #: 1
+File #: 2
+File #: 3
+File #: 4
+File #: 5
+File #: 6
+File #: 7
+File #: 8
+File #: 9
+File #: 10
+File #: 11
+File #: 12
+File #: 13
+File #: 14
+File #: 15
+File #: 16
+File #: 17
+File #: 18
+File #: 19
+File #: 20
+File #: 21
+File #: 22
+File #: 23
+File #: 24
+File #: 25
+File #: 26
+File #: 27
+File #: 28
+File #: 29
+File #: 30
+File #: 31
+File #: 32
+File #: 33
+File #: 34
+File #: 35
+File #: 36
+File #: 37
+File #: 38
+File #: 39
+File #: 40
+File #: 41
+File #: 42
+File #: 43
+File #: 44
+File #: 45
+File #: 46
+File #: 47
+File #: 48
+File #: 49
+File #: 50
+File #: 51
+File #: 52
+File #: 53
+File #: 54
+File #: 55
+File #: 56
+File #: 57
+File #: 58
+File #: 59
+File #: 60
+File #: 61
+File #: 62
+File #: 63
+File #: 64
+File #: 65
+File #: 66
+File #: 67
+File #: 68
+File #: 69
+File #: 70
+File #: 71
+File #: 72
+File #: 73
+File #: 74
+File #: 75
+File #: 76
+File #: 77
+File #: 78
+File #: 79
+File #: 80
+File #: 81
+File #: 82
+File #: 83
+File #: 84
+File #: 85
+File #: 86
+File #: 87
+File #: 88
+File #: 89
+File #: 90
+File #: 91
+File #: 92
+File #: 93
+File #: 94
+File #: 95
+File #: 96
+File #: 97
+File #: 98
+File #: 99
+File #: 100
+File #: 101
+File #: 102
+File #: 103
+File #: 104
+File #: 105
+File #: 106
+File #: 107
+File #: 108
+File #: 109
+File #: 110
+File #: 111
+File #: 112
+File #: 113
+File #: 114
+File #: 115
+File #: 116
+File #: 117
+File #: 118
+File #: 119
+File #: 120
+File #: 121
+File #: 122
+File #: 123
+File #: 124
+File #: 125
+File #: 126
+File #: 127
+File #: 128
+File #: 129
+File #: 130
+File #: 131
+File #: 132
+File #: 133
+File #: 134
+File #: 135
+File #: 136
+File #: 137
+File #: 138
+File #: 139
+File #: 140
+File #: 141
+File #: 142
+File #: 143
+File #: 144
+File #: 145
+File #: 146
+File #: 147
+File #: 148
+File #: 149
+File #: 150
+File #: 151
+File #: 152
+File #: 153
+File #: 154
+File #: 155
+File #: 156
+File #: 157
+File #: 158
+File #: 159
+File #: 160
+File #: 161
+
+****************************************
+Minimizer is Linear / Migrad
+Chi2                      =  1.98069e+09
+NDf                       =           52
+p0                        =      78345.5   +/-   1759.92     
+p1                        =      -149762   +/-   20696       
+p2                        =  6.99077e+06   +/-   245344      
+p3                        =  3.40859e+06   +/-   936911      
+p4                        = -4.90664e+07   +/-   7.7353e+06  
+p5                        = -1.01965e+07   +/-   9.46797e+06 
+p6                        =  3.90187e+08   +/-   6.42997e+07 
+Pre-Bias: 0.0106455 // Chi2:77547
+Pre-Error Low: 0.000348424 // Pre-Error Up:0.000357495
+
+****************************************
+Minimizer is Linear / Migrad
+Chi2                      =  1.36218e+08
+NDf                       =            7
+p0                        =      75798.1   +/-   2088.94     
+p1                        =      55053.2   +/-   52223.6     
+p2                        =  7.90582e+06   +/-   1.91978e+06 
+Final Bias: -0.00348181 ==> Error Low: 0.000272471 // Error Up:0.000326985

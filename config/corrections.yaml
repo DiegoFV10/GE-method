@@ -1,0 +1,31 @@
+puweight:
+    name: puWeightRDF
+    path: Corrections.LUM.puWeight
+    parameters:
+        isMC: self.dataset.process.isMC
+        year: self.config.year
+        isUL: self.dataset.has_tag('ul')
+        postEE: self.dataset.has_tag('postEE')
+
+Muon_SFs:
+    name: MuonSF
+    path: Corrections.MUO.muonSF_GEMethod
+    parameters:
+        isMC: self.dataset.process.isMC
+        year: self.config.year
+        preVFP: self.dataset.has_tag('preVFP')
+        postEE: self.dataset.has_tag('postEE')
+
+# ONLY FOR RUN 2 UL
+#ptZ reweight:
+#    name: ptZreweightRDF
+#    path: GEM.Modules.ptZreweight
+#    parameters:
+#        isMC: self.dataset.process.isMC
+#        year: self.config.year
+#        isUL: self.dataset.has_tag('ul')
+#        preVFP: self.dataset.has_tag('preVFP')
+
+kappa regions:
+    name: biasRegions
+    path: GEM.Modules.biasMap_regions

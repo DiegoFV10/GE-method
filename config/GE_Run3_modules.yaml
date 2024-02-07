@@ -1,0 +1,28 @@
+Golden_JSON:
+    name: lumiFilterRDF
+    path: Base.Modules.lumiFilter
+    parameters:
+        isMC: self.dataset.process.isMC
+        year: self.config.year
+
+HLT Trigger path:
+    name: HLTpath
+    path: GEM.Modules.HLTtrigger
+    parameters:
+        year: self.config.year
+
+Z on-shell Stitching:
+    name: Zonshell_Overlap
+    path: GEM.Modules.Sample_Overlapping
+    parameters:
+        isZonshell: self.dataset.process.get_aux('isZonshell', False)
+
+Z boosted Stitching:
+    name: Zboosted_Overlap
+    path: GEM.Modules.Sample_Overlapping
+    parameters:
+        isZboost: self.dataset.process.get_aux('isZboost', False)
+
+DiMuon Selection:
+    name: DiMuonSelec
+    path: GEM.Modules.DiMuonSelec
