@@ -5,36 +5,67 @@ from plotting_tools import Label
 from collections import OrderedDict
 import ROOT
 import math
+from cmt.config.base_config import Config as base_config
 
-class Config():
-    def __init__(self, name, year, ecm, lumi_fb=None, lumi_pb=None, **kwargs):
-        self.name=name
-        self.year=year
-        self.ecm=ecm
-        assert lumi_fb or lumi_pb
-        if lumi_fb:
-            self.lumi_fb = lumi_fb
-            self.lumi_pb = lumi_fb * 1000.
-        else:
-            self.lumi_fb = lumi_pb / 1000.
-            self.lumi_pb = lumi_pb 
+class Config(base_config):
+    def __init__(self, *args, **kwargs):
+        super(Config, self).__init__(*args, **kwargs)
+
+        # Define the lumi dict
+        preEE = {
+            "C" : 5010*0.918,
+            "D" : 2970*0.918,
+        }
+        postEE = {
+            "E" : 5807*0.935,
+            "F" : 17782*0.935,
+            "G" : 3083*0.935,
+        }
+        lumi_pb = {
+            "preEE"  : preEE,
+            "postEE" : postEE,
+        }
+
+        #### PATCH FOR NORMALIZATION ISSUES:  ####
+        #### commented some lines and created ####
+        #### manually lumi_fb dict unscaled   ####
+#        if lumi_pb and not type(lumi_pb) == dict:
+#            self.lumi_fb = lumi_pb / 1000.
+#            self.lumi_pb = lumi_pb 
+#
+#        else:
+#            lumi_fb = {}
+#            for period, period_dict in lumi_pb.items():
+#                period_dict_fb = {}
+#                for era, lum in period_dict.items():
+#                    period_dict_fb[era] = lum / 1000
+#                lumi_fb[period] = period_dict_fb
+#            self.lumi_fb = lumi_fb
+#            self.lumi_pb = lumi_pb
+
+        preEE_fb = {
+            "C" : 5.010,
+            "D" : 2.970,
+        }
+        postEE_fb = {
+            "E" : 5.807,
+            "F" : 17.782,
+            "G" : 3.083,
+        }
+        lumi_fb = {
+            "preEE"  : preEE_fb,
+            "postEE" : postEE_fb,
+        }
+        self.lumi_fb = lumi_fb
+        self.lumi_pb = lumi_pb
+        ############################################
 
         self.x = kwargs
-
-        self.postEE = kwargs.pop("postEE")
-        if self.postEE:
-            self.lumi_fb = 27.007*0.951 # Normalization by first mass bin                                                                                            
-            self.lumi_pb = 27007*0.951 # Normalization by first mass bin
-            self.era = "postEE"
-        else:
-            self.lumi_fb = 8.077*0.912 # Normalization by first mass bin
-            self.lumi_pb = 8077*0.912 # Normalization by first mass bin
-            self.era = "preEE"
 
         self.channels = self.add_channels()
         self.regions = self.add_regions()
         self.categories = self.add_categories()
-        self.processes, self.process_group_names = self.add_processes()
+        self.processes, self.process_group_names, _ = self.add_processes()
         self.datasets = self.add_datasets()
         if 'xrd_redir' in kwargs:
             self.prefix_datasets(self.datasets, kwargs['xrd_redir'])
@@ -43,6 +74,9 @@ class Config():
         self.weights = self.add_weights()
         self.systematics = self.add_systematics()
         self.default_module_files = self.add_default_module_files()
+
+        self.upper_left_text = "Private work"
+        self.label_size = 1.2
 
     def join_selection_channels(self, selection):
         return jrs([jrs(jrs(selection[ch.name], op="and"), ch.selection, op="and")
@@ -128,7 +162,7 @@ class Config():
             Process("ZZ_postEE", Label("ZZ"), color=(206, 30, 30), parent_process="DiBoson_postEE"),
 
             ### DATA ###
-            Process("Data2022", Label("Data"), color=(0, 0, 0)),
+            Process("Data2022", Label("Data"), color=(0, 0, 0), isData=True),
             Process("Data2022_preEE", Label("Data"), color=(0, 0, 0), isData=True, parent_process="Data2022"),
             Process("Data2022_postEE", Label("Data"), color=(0, 0, 0), isData=True, parent_process="Data2022"),
 
@@ -176,9 +210,16 @@ class Config():
                 "Data2022_postEE",
             ],
 
+            "2022_full": [
+                "DrellYan",
+                "Top",
+                "DiBoson",
+                "Data2022",
+            ],
+
         }
 
-        return ObjectCollection(processes), process_group_names
+        return ObjectCollection(processes), process_group_names, []
 
 
     def prefix_datasets(self, datasets, prefix):
@@ -197,9 +238,10 @@ class Config():
             Dataset("Zmumu_M-50to120",
                 dataset="/DYto2Mu_MLL-50to120_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Zmumu_onshell"),
-                prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=2219.0,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Zmumu_M-50to120_postEE",
@@ -207,16 +249,18 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("Zmumu_onshell_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=2219.0,
                 tags=["postEE"]),
 
             Dataset("Zmumu_M-120to200",
                 dataset="/DYto2Mu_MLL-120to200_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Zmumu2"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=21.65,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Zmumu_M-120to200_postEE",
@@ -224,16 +268,18 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("Zmumu_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=21.65,
                 tags=["postEE"]),
 
             Dataset("Zmumu_M-200to400",
                 dataset="/DYto2Mu_MLL-200to400_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Zmumu3"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=3.058,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Zmumu_M-200to400_postEE",
@@ -241,16 +287,18 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("Zmumu_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=3.058,
                 tags=["postEE"]),
 
             Dataset("Zmumu_M-400to800",
                 dataset="/DYto2Mu_MLL-400to800_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Zmumu4"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.2691,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Zmumu_M-400to800_postEE",
@@ -258,16 +306,18 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("Zmumu_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.2691,
                 tags=["postEE"]),
 
             Dataset("Zmumu_M-800to1500",
                 dataset="/DYto2Mu_MLL-800to1500_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Zmumu5"),
-                prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.01915,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Zmumu_M-800to1500_postEE",
@@ -275,16 +325,18 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("Zmumu_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.01915,
                 tags=["postEE"]),
 
             Dataset("Zmumu_M-1500to2500",
                 dataset="/DYto2Mu_MLL-1500to2500_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Zmumu6"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.001111,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Zmumu_M-1500to2500_postEE",
@@ -292,16 +344,18 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("Zmumu_postEE"),
-                prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.001111,
                 tags=["postEE"]),
 
             Dataset("Zmumu_M-2500to4000",
                 dataset="/DYto2Mu_MLL-2500to4000_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Zmumu7"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.00005949,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Zmumu_M-2500to4000_postEE",
@@ -309,16 +363,18 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("Zmumu_postEE"),
-                prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.00005949,
                 tags=["postEE"]),
 
             Dataset("Zmumu_M-4000to6000",
                 dataset="/DYto2Mu_MLL-4000to6000_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Zmumu8"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.000001558,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Zmumu_M-4000to6000_postEE",
@@ -326,16 +382,18 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("Zmumu_postEE"),
-                prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.000001558,
                 tags=["postEE"]),
 
             Dataset("Zmumu_M-6000",
                 dataset="/DYto2Mu_MLL-6000_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Zmumu9"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.00000003519,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Zmumu_M-6000_postEE",
@@ -343,7 +401,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("Zmumu_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.00000003519,
                 tags=["postEE"]),
 
@@ -352,153 +411,171 @@ class Config():
             Dataset("Ztautau_M-50to120",
                 dataset="/DYto2Tau_MLL-50to120_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau_onshell"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=2219.0,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Ztautau_M-50to120_postEE",
                 dataset="/DYto2Tau_MLL-50to120_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau_onshell_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=2219.0,
                 tags=["postEE"]),
 
             Dataset("Ztautau_M-120to200",
                 dataset="/DYto2Tau_MLL-120to200_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=21.65,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Ztautau_M-120to200_postEE",
                 dataset="/DYto2Tau_MLL-120to200_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=21.65,
                 tags=["postEE"]),
 
             Dataset("Ztautau_M-200to400",
                 dataset="/DYto2Tau_MLL-200to400_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=3.058,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Ztautau_M-200to400_postEE",
                 dataset="/DYto2Tau_MLL-200to400_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=3.058,
                 tags=["postEE"]),
 
             Dataset("Ztautau_M-400to800",
                 dataset="/DYto2Tau_MLL-400to800_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.2691,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Ztautau_M-400to800_postEE",
                 dataset="/DYto2Tau_MLL-400to800_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.2691,
                 tags=["postEE"]),
 
             Dataset("Ztautau_M-800to1500",
                 dataset="/DYto2Tau_MLL-800to1500_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau"),
-                prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.01915,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Ztautau_M-800to1500_postEE",
                 dataset="/DYto2Tau_MLL-800to1500_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau_postEE"),
-                prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.01915,
                 tags=["postEE"]),
 
             Dataset("Ztautau_M-1500to2500",
                 dataset="/DYto2Tau_MLL-1500to2500_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.001111,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Ztautau_M-1500to2500_postEE",
                 dataset="/DYto2Tau_MLL-1500to2500_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.001111,
                 tags=["postEE"]),
 
             Dataset("Ztautau_M-2500to4000",
                 dataset="/DYto2Tau_MLL-2500to4000_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.00005949,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Ztautau_M-2500to4000_postEE",
                 dataset="/DYto2Tau_MLL-2500to4000_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.00005949,
                 tags=["postEE"]),
 
             Dataset("Ztautau_M-4000to6000",
                 dataset="/DYto2Tau_MLL-4000to6000_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.000001558,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Ztautau_M-4000to6000_postEE",
                 dataset="/DYto2Tau_MLL-4000to6000_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.000001558,
                 tags=["postEE"]),
 
             Dataset("Ztautau_M-6000",
                 dataset="/DYto2Tau_MLL-6000_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.00000003519,), # From GenXSecAnalyzer (NLO)
 
             Dataset("Ztautau_M-6000_postEE",
                 dataset="/DYto2Tau_MLL-6000_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("Ztautau_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.00000003519,
                 tags=["postEE"]),
 
@@ -509,7 +586,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ1"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=477.2,), # From GenXSecAnalyzer (NLO)
 
             Dataset("DY_ptZ-40to100_1J_postEE",
@@ -517,7 +595,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=477.2,
                 tags=["postEE"]),
 
@@ -526,22 +605,27 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ1"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=177.7,), # From GenXSecAnalyzer (NLO)
 
-            #Dataset("DY_ptZ-40to100_2J_postEE",
-            #    dataset="",
-            #    process=self.processes.get("DY_ptZ_postEE"),
-            #    #prefix="eoscms-ns-ip563.cern.ch:1098//",
-            #    xs=177.7,
-            #    tags=["postEE"]),
+            Dataset("DY_ptZ-40to100_2J_postEE",
+                dataset="/DYto2L-2Jets_MLL-50_PTLL-40to100_2J_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/"
+                    "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v3/"
+                    "NANOAODSIM",
+                process=self.processes.get("DY_ptZ_postEE"),
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
+                xs=177.7,
+                tags=["postEE"]),
 
             Dataset("DY_ptZ-100to200_1J",
                 dataset="/DYto2L-2Jets_MLL-50_PTLL-100to200_1J_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ2"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=45.50,), # From GenXSecAnalyzer (NLO)
 
             Dataset("DY_ptZ-100to200_1J_postEE",
@@ -549,7 +633,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=45.50,
                 tags=["postEE"]),
 
@@ -558,7 +643,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ2"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=52.23,), # From GenXSecAnalyzer (NLO)
 
             Dataset("DY_ptZ-100to200_2J_postEE",
@@ -566,7 +652,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v3/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=52.23,
                 tags=["postEE"]),
 
@@ -575,7 +662,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ3"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=3.370,), # From GenXSecAnalyzer (NLO)
 
             Dataset("DY_ptZ-200to400_1J_postEE",
@@ -583,7 +671,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ_postEE"),
-                prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=3.370,
                 tags=["postEE"]),
 
@@ -592,7 +681,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ3"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=7.216,), # From GenXSecAnalyzer (NLO)
 
             Dataset("DY_ptZ-200to400_2J_postEE",
@@ -600,7 +690,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v3/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=7.216,
                 tags=["postEE"]),
 
@@ -609,7 +700,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ4"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.1167,), # From GenXSecAnalyzer (NLO)
 
             Dataset("DY_ptZ-400to600_1J_postEE",
@@ -617,7 +709,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.1167,
                 tags=["postEE"]),
 
@@ -626,7 +719,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ4"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.4203,), # From GenXSecAnalyzer (NLO)
 
             Dataset("DY_ptZ-400to600_2J_postEE",
@@ -634,7 +728,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ_postEE"),
-                prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.4203,
                 tags=["postEE"]),
 
@@ -643,7 +738,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ5"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.01394,), # From GenXSecAnalyzer (NLO)
 
             Dataset("DY_ptZ-600_1J_postEE",
@@ -651,7 +747,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v3/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ_postEE"),
-                prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.01394,
                 tags=["postEE"]),
 
@@ -660,7 +757,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ5"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=0.07020,), # From GenXSecAnalyzer (NLO)
 
             Dataset("DY_ptZ-600_2J_postEE",
@@ -668,7 +766,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v1/"
                     "NANOAODSIM",
                 process=self.processes.get("DY_ptZ_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=0.07020,
                 tags=["postEE"]),
 
@@ -681,7 +780,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("TTbar"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=96.9,), # From TOP-22-012
 
             Dataset("TT_2l2nu_postEE",
@@ -689,26 +789,28 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("TTbar_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=96.9,
                 tags=["postEE"]),
 
             Dataset("TT_lnu2q",
                 dataset="/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("TTbar"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=404.0,), # From TOP-22-012
 
             Dataset("TT_lnu2q_postEE",
                 dataset="/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("TTbar_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=404.0,
-                #merging={"preselection":3},
                 tags=["postEE"]),
 
             # Single Top
@@ -718,15 +820,17 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("ST"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=19.31,), # From https://twiki.cern.ch/twiki/bin/view/LHCPhysics/SingleTopNNLORef x BR
 
             Dataset("ST_tW-lnu2q_postEE",
                 dataset="/TWminustoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("ST_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=19.31,
                 tags=["postEE"]),
 
@@ -735,15 +839,17 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("ST"),
-                prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=4.663,),
 
             Dataset("ST_tW-2l2nu_postEE",
                 dataset="/TWminusto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("ST_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=4.663,
                 tags=["postEE"]),
 
@@ -752,32 +858,36 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("ST"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=19.31,), 
 
             Dataset("ST_tbarW-lnu2q_postEE",
                 dataset="/TbarWplustoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("ST_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=19.31,
                 tags=["postEE"]),
 
             Dataset("ST_tbarW-2l2nu",
                 dataset="/TbarWplusto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("ST"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=4.663,), 
 
             Dataset("ST_tbarW-2l2nu_postEE",
                 dataset="/TbarWplusto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("ST_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=4.663,
                 tags=["postEE"]),
 
@@ -786,49 +896,55 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("ST"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=3.623,),
 
             Dataset("ST_s-top_postEE",
                 dataset="/TBbartoLplusNuBbar-s-channel-4FS_TuneCP5_13p6TeV_amcatnlo-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("ST_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=3.623,
                 tags=["postEE"]),
 
             Dataset("ST_s-tbar",
                 dataset="/TbarBtoLminusNuB-s-channel-4FS_TuneCP5_13p6TeV_amcatnlo-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("ST"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=3.623,),
 
             Dataset("ST_s-tbar_postEE",
                 dataset="/TbarBtoLminusNuB-s-channel-4FS_TuneCP5_13p6TeV_amcatnlo-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("ST_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=3.623,
                 tags=["postEE"]),
 
             Dataset("ST_t-top",
                 dataset="/TBbarQ_t-channel_4FS_TuneCP5_13p6TeV_powheg-madspin-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("ST"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=145.0,),
 
             Dataset("ST_t-top_postEE",
                 dataset="/TBbarQ_t-channel_4FS_TuneCP5_13p6TeV_powheg-madspin-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("ST_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=145.0,
                 tags=["postEE"]),
 
@@ -837,15 +953,17 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("ST"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=87.2,),
 
             Dataset("ST_t-tbar_postEE",
                 dataset="/TbarBQ_t-channel_4FS_TuneCP5_13p6TeV_powheg-madspin-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("ST_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=87.2,
                 tags=["postEE"]),
 
@@ -855,17 +973,19 @@ class Config():
             Dataset("WW_2l2nu",
                 dataset="/WWto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("WW"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=12.98,), # From 13 TeV value with 4% expected increase with MCFM x BR
 
             Dataset("WW_2l2nu_postEE",
                 dataset="/WWto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/"
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("WW_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=12.98,
                 tags=["postEE"]),
 
@@ -874,7 +994,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("WW"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                runPeriod="preEE",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
                 xs=53.73,),
 
             Dataset("WW_lnu2q_postEE",
@@ -882,7 +1003,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("WW_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=53.73,
                 tags=["postEE"]),
 
@@ -891,7 +1013,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("WZ"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=3.661,), # From MATRIX (SMP-22-017 at NNLO) x BR
 
             Dataset("WZ_2l2q_postEE",
@@ -899,7 +1022,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("WZ_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=3.661,
                 tags=["postEE"]),
 
@@ -908,7 +1032,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("WZ"),
-                prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=1.769,),  
 
             Dataset("WZ_3lnu_postEE",
@@ -916,7 +1041,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("WZ_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=1.769,
                 tags=["postEE"]),
 
@@ -925,7 +1051,8 @@ class Config():
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("WZ"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=12.39,),  
 
             Dataset("WZ_lnu2q_postEE",
@@ -933,16 +1060,18 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("WZ_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                #prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=12.39,
                 tags=["postEE"]),
 
             Dataset("ZZ",
                 dataset="/ZZ_TuneCP5_13p6TeV_pythia8/"
                     "Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2/"
-                    "NANOAODSIM ",
+                    "NANOAODSIM",
                 process=self.processes.get("ZZ"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
                 xs=16.7,), # From MATRIX (SMP-22-017 at NNLO)
 
             Dataset("ZZ_postEE",
@@ -950,7 +1079,8 @@ class Config():
                     "Run3Summer22EENanoAODv12-130X_mcRun3_2022_realistic_postEE_v6-v2/"
                     "NANOAODSIM",
                 process=self.processes.get("ZZ_postEE"),
-                #prefix="eoscms-ns-ip563.cern.ch:1098//",
+                prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
                 xs=16.7,
                 tags=["postEE"]),
 
@@ -961,36 +1091,48 @@ class Config():
                 dataset="/SingleMuon/Run2022C-22Sep2023-v1/NANOAOD",
                 process=self.processes.get("Data2022_preEE"),
                 prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
+                runEra="C",
                 ),
 
             Dataset("Data_2022_C_Muon",
-                dataset="/Muon/Run2022C-22Sep2023-v1/NANOAOD ",
+                dataset="/Muon/Run2022C-22Sep2023-v1/NANOAOD",
                 process=self.processes.get("Data2022_preEE"),
                 prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
+                runEra="C",
                 ),
 
             Dataset("Data_2022_D",
-                dataset="/Muon/Run2022D-22Sep2023-v1/NANOAOD ",
+                dataset="/Muon/Run2022D-22Sep2023-v1/NANOAOD",
                 process=self.processes.get("Data2022_preEE"),
                 prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="preEE",
+                runEra="D",
                 ),
 
             Dataset("Data_2022_E",
-                dataset="/Muon/Run2022E-22Sep2023-v1/NANOAOD ",
+                dataset="/Muon/Run2022E-22Sep2023-v1/NANOAOD",
                 process=self.processes.get("Data2022_postEE"),
                 prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
+                runEra="E",
                 tags=["postEE"]),
 
             Dataset("Data_2022_F",
-                dataset="/Muon/Run2022F-22Sep2023-v2/NANOAOD ",
+                dataset="/Muon/Run2022F-22Sep2023-v2/NANOAOD",
                 process=self.processes.get("Data2022_postEE"),
                 prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
+                runEra="F",
                 tags=["postEE"]),
 
             Dataset("Data_2022_G",
-                dataset="/Muon/Run2022G-22Sep2023-v1/NANOAOD ",
+                dataset="/Muon/Run2022G-22Sep2023-v1/NANOAOD",
                 process=self.processes.get("Data2022_postEE"),
                 prefix="xrootd-es-cie.ciemat.es:1096//",
+                runPeriod="postEE",
+                runEra="G",
                 tags=["postEE"]),
 
 
@@ -1483,5 +1625,15 @@ class Config():
             else:
                 return False
 
+    def get_inner_text_for_plotting(self, category, region):
+        inner_text = ""
+        #inner_text=[category.label + " category"]
+        if region:
+            if isinstance(region.label, list):
+                inner_text += region.label
+            else:
+                inner_text.append(region.label)
+        return inner_text
 
-config = Config("base", year=2022, ecm=13.6, lumi_pb=35084, postEE=True)
+
+config = Config("base", year=2022, ecm=13.6, lumi_pb=34652)

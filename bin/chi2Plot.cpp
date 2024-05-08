@@ -46,7 +46,7 @@
 #include "TPaveLabel.h"
 
 
-void computeChi2(string biasList, string dataHisto, string VFP = "", bool inclusive = false, string region = "", FILE* fOut = NULL){
+void computeChi2(string biasList, string dataHisto, string runPeriod = "", bool inclusive = false, string region = "", FILE* fOut = NULL){
     
   gStyle->SetOptStat("e");
   gStyle->SetStatX(0.899514);
@@ -68,7 +68,7 @@ void computeChi2(string biasList, string dataHisto, string VFP = "", bool inclus
   }
   //Rebinning
   int rebinning;
-  float prefitRange;
+  float prefitRange = 0.2;
   int idx;
   if(!inclusive){
     //int rebinning_array[18] = {5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,7,4,5}; // For UL18
@@ -76,14 +76,19 @@ void computeChi2(string biasList, string dataHisto, string VFP = "", bool inclus
     //int rebinning_array[18] = {6,4,4,3,3,3,3,3,3,3,3,4,3,3,3,5,6,4}; // For UL16 preVFP
     //int rebinning_array[18] = {4,6,5,4,4,4,4,4,4,4,4,4,3,3,3,5,6,5}; // For UL16 postVFP
     /* Run 3 */
-    //int rebinning_array[18] = {6,4,6,6,6,5,4,5,4,6,4,4,3,6,4,6,6,5}; // For 2022preEE
-    int rebinning_array[18] = {10,10,10,6,6,6,4,5,4,6,4,4,3,6,4,10,6,10}; // For 2022postEE
+    //int rebinning_array[18] = {6,6,6, 6,7,8, 4,5,4, 6,4,4, 4,6,5, 6,6,5}; // For 2022preEE
+    //int rebinning_array[18] = {6,6,6, 4,8,4, 4,4,4, 4,4,4, 5,5,4, 6,6,6}; // For 2022postEE
+    int rebinning_array[18] = {5,8,5, 4,6,10, 4,4,5, 4,5,4, 4,6,4, 10,6,5}; // For 2022E
+    //int rebinning_array[18] = {6,4,6, 4,4,4, 3,6,4, 4,3,4, 5,4,4, 6,5,5}; // For 2023preBPix
+    //int rebinning_array[18] = {10,10,10, 5,5,10, 4,4,4, 4,4,4, 8,4,8, 8,6,5}; // For 2023postBPix
 
     idx = std::stoi(region);
     rebinning = rebinning_array[idx];
 
-    //float prefitting_array[18] = {0.2,0.2,0.2,0.2,0.2,0.3,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2}; // For 2022preEE
-    float prefitting_array[18] = {0.2,0.2,0.2,0.2,0.15,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2}; // For 2022postEE
+    //float prefitting_array[18] = {0.2,0.2,0.2, 0.2,0.2,0.3, 0.2,0.2,0.2, 0.2,0.2,0.2, 0.2,0.2,0.2, 0.2,0.2,0.2}; // For 2022preEE
+    float prefitting_array[18] = {0.2,0.2,0.2, 0.2,0.2,0.2, 0.2,0.2,0.2, 0.2,0.2,0.2, 0.2,0.2,0.2, 0.2,0.2,0.2}; // For 2022postEE
+    //float prefitting_array[18] = {0.2,0.2,0.2, 0.2,0.2,0.2, 0.2,0.15,0.2, 0.2,0.2,0.2, 0.2,0.2,0.2, 0.2,0.2,0.2}; // For 2023preBPix
+    //float prefitting_array[18] = {0.2,0.2,0.2, 0.2,0.2,0.2, 0.2,0.2,0.2, 0.2,0.2,0.2, 0.1,0.2,0.2, 0.2,0.2,0.2}; // For 2023postBPix
     prefitRange = prefitting_array[idx];
   }
 
@@ -93,15 +98,16 @@ void computeChi2(string biasList, string dataHisto, string VFP = "", bool inclus
   //TH1D* Data = (TH1D*) dataF->Get("histograms/DataUL18"); // For UL18 Corrected
   //TH1D* Data = (TH1D*) dataF->Get("histograms/DataUL18_BAD"); // For UL18 BAD
   //TH1D* Data = (TH1D*) dataF->Get("histograms/DataUL17"); // For UL17
-  //TH1D* Data = (TH1D*) dataF->Get(("histograms/DataUL16" + VFP).c_str()); // For UL16
+  //TH1D* Data = (TH1D*) dataF->Get(("histograms/DataUL16" + runPeriod).c_str()); // For UL16
   /* Run 3 */
-  TH1D* Data = (TH1D*) dataF->Get(("histograms/Data2022" + VFP).c_str()); // For 2022
+  TH1D* Data = (TH1D*) dataF->Get("histograms/Data2022"); // For 2022
+  //TH1D* Data = (TH1D*) dataF->Get("histograms/Data2023"); // For 2023
 
   //Rebinning
   if(!inclusive)
     Data = (TH1D*) Data->Rebin(rebinning);
   else
-    Data = (TH1D*) Data->Rebin(2);
+    Data = (TH1D*) Data->Rebin(3);
   /* //To avoid error=0 for manual Chi2?
   int ndBins = Data->GetNbinsX();
   double nData[ndBins];
@@ -131,7 +137,7 @@ void computeChi2(string biasList, string dataHisto, string VFP = "", bool inclus
     if(!inclusive)
       bkg = (TH1D*) bkg->Rebin(rebinning);
     else
-      bkg = (TH1D*) bkg->Rebin(2);
+      bkg = (TH1D*) bkg->Rebin(3);
     
     int nBins = bkg->GetNbinsX();
 
@@ -334,7 +340,7 @@ void computeChi2(string biasList, string dataHisto, string VFP = "", bool inclus
 
   //gr->SetMaximum(chi2[50]); //60
   //gr->SetTitle("");
-  //gr->GetXaxis()->SetTitle("#kappa_{bias}  (TeV^{-1})");                                                                                            
+  //gr->GetXaxis()->SetTitle("#kappa_{bias}  (TeV^{-1})");
   //gr->GetYaxis()->SetTitle("#chi^{2}");
   gr->SetMarkerStyle(20);
   gr->SetMarkerSize(0.75);
@@ -362,8 +368,11 @@ void computeChi2(string biasList, string dataHisto, string VFP = "", bool inclus
   //title = "#bf{CMS} #it{Work in progress}                  2016 preVFP, 19.5 fb^{-1} (13 TeV)"; // UL16 preVFP
   //title = "#bf{CMS} #it{Work in progress}                 2016 postVFP, 16.8 fb^{-1} (13 TeV)"; // UL16 postVFP
   /* Run 3 */
-  //title = "#bf{CMS} #it{Work in progress}                  2022 preEE, 8.1 fb^{-1} (13.6 TeV)"; // 2022preEE
-  title = "#bf{CMS} #it{Work in progress}                2022 postEE, 27.0 fb^{-1} (13.6 TeV)"; // 2022postEE
+  //title = "#bf{CMS} #it{Work in progress}                  2022 preEE, 8.0 fb^{-1} (13.6 TeV)"; // 2022preEE
+  //title = "#bf{CMS} #it{Work in progress}                2022 postEE, 26.7 fb^{-1} (13.6 TeV)"; // 2022postEE
+  title = "#bf{CMS} #it{Work in progress}                      2022 E, 5.8 fb^{-1} (13.6 TeV)"; // 2022E
+  //title = "#bf{CMS} #it{Work in progress}               2023 preBPix, 17.7 fb^{-1} (13.6 TeV)"; // 2023preBPix
+  //title = "#bf{CMS} #it{Work in progress}               2023 postBPix, 9.5 fb^{-1} (13.6 TeV)"; // 2023postBPix
 
   TLatex* preliminary = new TLatex(0.11,0.92, title);
   preliminary->SetNDC();
@@ -415,13 +424,16 @@ void computeChi2(string biasList, string dataHisto, string VFP = "", bool inclus
     //c2->SaveAs("png/chi2/chi2_UL17_ptZbinned.png"); // UL17
     //c2->SaveAs("png/chi2/chi2_UL17_ptZbinned.root");
     //c2->SaveAs("png/chi2/chi2_UL17_ptZbinned.pdf");
-    //c2->SaveAs(("png/chi2/chi2_UL16" + VFP + "_ptZreweight.png").c_str()); // UL16
-    //c2->SaveAs(("png/chi2/chi2_UL16" + VFP + "_ptZreweight.root").c_str());
-    //c2->SaveAs(("png/chi2/chi2_UL16" + VFP + "_ptZreweight.pdf").c_str());
+    //c2->SaveAs(("png/chi2/chi2_UL16" + runPeriod + "_ptZreweight.png").c_str()); // UL16
+    //c2->SaveAs(("png/chi2/chi2_UL16" + runPeriod + "_ptZreweight.root").c_str());
+    //c2->SaveAs(("png/chi2/chi2_UL16" + runPeriod + "_ptZreweight.pdf").c_str());
     /* Run 3 */
-    c2->SaveAs(("png/chi2/chi2_2022" + VFP + "_inclusive.png").c_str()); // 2022
-    c2->SaveAs(("png/chi2/chi2_2022" + VFP + "_inclusive.root").c_str());
-    c2->SaveAs(("png/chi2/chi2_2022" + VFP + "_inclusive.pdf").c_str());
+    //c2->SaveAs(("png/chi2/chi2_2022" + runPeriod + "_inclusive.png").c_str()); // 2022
+    //c2->SaveAs(("png/chi2/chi2_2022" + runPeriod + "_inclusive.root").c_str());
+    //c2->SaveAs(("png/chi2/chi2_2022" + runPeriod + "_inclusive.pdf").c_str());
+    c2->SaveAs(("png/chi2/chi2_2023" + runPeriod + "_inclusive.png").c_str()); // 2023
+    c2->SaveAs(("png/chi2/chi2_2023" + runPeriod + "_inclusive.root").c_str());
+    c2->SaveAs(("png/chi2/chi2_2023" + runPeriod + "_inclusive.pdf").c_str());
   }
   /// Save bias map plots
   else {
@@ -432,16 +444,18 @@ void computeChi2(string biasList, string dataHisto, string VFP = "", bool inclus
     //c2->SaveAs(("png/chi2/UL17/chi2_"+ region +"_UL17.png").c_str()); // UL17
     //c2->SaveAs(("png/chi2/UL17/chi2_"+ region +"_UL17.root").c_str());
     //c2->SaveAs(("png/chi2/UL17/chi2_"+ region +"_UL17.pdf").c_str());
-    //c2->SaveAs(("png/chi2/UL16postVFP/chi2_"+ region +"_UL16"+ VFP +".png").c_str()); // UL16
-    //c2->SaveAs(("png/chi2/UL16postVFP/chi2_"+ region +"_UL16"+ VFP +".root").c_str());
-    //c2->SaveAs(("png/chi2/UL16postVFP/chi2_"+ region +"_UL16"+ VFP +".pdf").c_str());
+    //c2->SaveAs(("png/chi2/UL16postVFP/chi2_"+ region +"_UL16"+ runPeriod +".png").c_str()); // UL16
+    //c2->SaveAs(("png/chi2/UL16postVFP/chi2_"+ region +"_UL16"+ runPeriod +".root").c_str());
+    //c2->SaveAs(("png/chi2/UL16postVFP/chi2_"+ region +"_UL16"+ runPeriod +".pdf").c_str());
     /* Run 3 */
-    c2->SaveAs(("png/chi2/2022"+ VFP +"/chi2_"+ region +"_2022"+ VFP +".png").c_str()); // 2022
-    c2->SaveAs(("png/chi2/2022"+ VFP +"/chi2_"+ region +"_2022"+ VFP +".root").c_str());
-    c2->SaveAs(("png/chi2/2022"+ VFP +"/chi2_"+ region +"_2022"+ VFP +".pdf").c_str());
+    c2->SaveAs(("png/chi2/2022"+ runPeriod +"/chi2_"+ region +"_2022"+ runPeriod +".png").c_str()); // 2022
+    c2->SaveAs(("png/chi2/2022"+ runPeriod +"/chi2_"+ region +"_2022"+ runPeriod +".root").c_str());
+    c2->SaveAs(("png/chi2/2022"+ runPeriod +"/chi2_"+ region +"_2022"+ runPeriod +".pdf").c_str());
+    //c2->SaveAs(("png/chi2/2023"+ runPeriod +"/chi2_"+ region +"_2023"+ runPeriod +".png").c_str()); // 2023
+    //c2->SaveAs(("png/chi2/2023"+ runPeriod +"/chi2_"+ region +"_2023"+ runPeriod +".root").c_str());
+    //c2->SaveAs(("png/chi2/2023"+ runPeriod +"/chi2_"+ region +"_2023"+ runPeriod +".pdf").c_str());
   
     /// Save bias map results in a txt file
-    //fprintf(fOut, "%s %f %f %f \n", region.c_str(), Bias, BiasErrorLow, BiasErrorUp);
     fprintf(fOut, "%s %f %f \n", region.c_str(), Bias, BiasErrorLow);
   }
 
@@ -464,6 +478,9 @@ void chi2Plot(){
   //computeChi2("/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/inclusiveBias_2022preEE.txt", "/eos/user/d/diegof/cmt/FeaturePlot/GE2022_config/cat_preselection_2022/biasHistos_2022preEE/root/kappa_0.0__pg_2022_preEE.root", "_preEE", true); // For 2022preEE
   //computeChi2("/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/inclusiveBias_2022postEE.txt", "/eos/user/d/diegof/cmt/FeaturePlot/GE2022_config/cat_preselection_2022/biasHistos_2022postEE/root/kappa_0.0__pg_2022_postEE.root", "_postEE", true); // For 2022postEE
 
+  //computeChi2("/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/inclusiveBias_2023preBPix.txt", "/eos/user/d/diegof/cmt/FeaturePlot/GE2023_config/cat_preselection_2023/inclusiveBias_preBPix/root/kappa_0.0__pg_2023_full.root", "_preBPix", true); // For 2023preBPix
+  //computeChi2("/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/inclusiveBias_2023postBPix.txt", "/eos/user/d/diegof/cmt/FeaturePlot/GE2023_config/cat_preselection_2023/inclusiveBias_postBPix/root/kappa_0.0__pg_2023_full.root", "_postBPix", true); // For 2023preBPix
+
   /* For Scale Maps */
   
   // Write output to txt
@@ -474,7 +491,10 @@ void chi2Plot(){
   //fOut = fopen("outBias/UL16postVFP/ScaleMap_results_UL16postVFP.txt","w+");
   /// Run 3 ///
   //fOut = fopen("outBias/2022preEE/ScaleMap_results_2022preEE.txt","w+"); // 2022preEE
-  fOut = fopen("outBias/2022postEE/ScaleMap_results_2022postEE.txt","w+"); // 2022postEE
+  //fOut = fopen("outBias/2022postEE/ScaleMap_results_2022postEE.txt","w+"); // 2022postEE
+  fOut = fopen("outBias/2022postEE/ScaleMap_results_2022E.txt","w+"); // 2022E
+  //fOut = fopen("outBias/2023preBPix/ScaleMap_results_2023preBPix.txt","w+"); // 2023preBPix
+  //fOut = fopen("outBias/2023postBPix/ScaleMap_results_2023postBPix.txt","w+"); // 2023postBPix
 
   for (int i=0; i<18; i++){ 
     std::string region = std::to_string(i);
@@ -488,11 +508,19 @@ void chi2Plot(){
     //computeChi2("/afs/cern.ch/user/d/diegof/Wprime/nanoaod_base_analysis/bin/txt/UL16postVFP/chi2Map_"+ region +"_UL16postVFP.txt", "/eos/user/d/diegof/cmt/FeaturePlot/UL16_config/cat_preselection_UL16/biasMap_UL16postVFP_GOOD/root/kappa_"+ region +"_0.0__pg_UL16_postVFP.root", "_postVFP", region, fOut); // UL16 postVFP
     /// Run 3 ///
     //cout << "/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2022preEE/chi2Map_"+ region +"_2022preEE.txt" << endl;
-    //computeChi2("/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2022preEE/chi2Map_"+ region +"_2022preEE.txt", "/eos/user/d/diegof/cmt/FeaturePlot/GE2022_config/cat_preselection_2022/biasMap_2022preEE/root/kappa_"+ region +"_0.0__pg_2022_preEE.root", "_preEE", false, region, fOut); // 2022preEE
-    cout << "/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2022postEE/chi2Map_"+ region +"_2022postEE_incomplete.txt" << endl;
-    computeChi2("/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2022postEE/chi2Map_"+ region +"_2022postEE_incomplete.txt", "/eos/user/d/diegof/cmt/FeaturePlot/GE2022_config/cat_preselection_2022/biasMap_2022postEE_partial/root/kappa_"+ region +"_0.0__pg_2022_postEE.root", "_postEE", false, region, fOut); // 2022preEE
+    //computeChi2("/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2022preEE/chi2Map_"+ region +"_2022preEE.txt", "/eos/user/d/diegof/cmt/FeaturePlot/GE2022_config/cat_preselection_2022/biasMap_preEE_ciemat/root/kappa_"+ region +"_0.0__pg_2022_full.root", "_preEE", false, region, fOut); // 2022preEE
+    //cout << "/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2022postEE/chi2Map_"+ region +"_2022postEE.txt" << endl;
+    //computeChi2("/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2022postEE/chi2Map_"+ region +"_2022postEE.txt", "/eos/user/d/diegof/cmt/FeaturePlot/GE2022_config/cat_preselection_2022/biasMap_postEE_ciemat/root/kappa_"+ region +"_0.0__pg_2022_full.root", "_postEE", false, region, fOut); // 2022postEE
+    // Checks 2022 //
+    cout << "/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2022checks/2022E/chi2Map_"+ region +"_2022E.txt" << endl;
+    computeChi2("/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2022checks/2022E/chi2Map_"+ region +"_2022E.txt", "/eos/user/d/diegof/cmt/FeaturePlot/GE2022_config/cat_preselection_2022/biasMap_2022E/root/kappa_"+ region +"_0.0__pg_2022_full.root", "E", false, region, fOut); // 2022E
+
+    //cout << "/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2023preBPix/chi2Map_"+ region +"_2023preBPix.txt" << endl;
+    //computeChi2("/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2023preBPix/chi2Map_"+ region +"_2023preBPix.txt", "/eos/user/d/diegof/cmt/FeaturePlot/GE2023_config/cat_preselection_2023/biasMap_preBPix/root/kappa_"+ region +"_0.0__pg_2023_full.root", "_preBPix", false, region, fOut); // 2023preBPix
+    //cout << "/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2023postBPix/chi2Map_"+ region +"_2023postBPix.txt" << endl;
+    //computeChi2("/afs/cern.ch/user/d/diegof/Wprime/GE-method/bin/txt/2023postBPix/chi2Map_"+ region +"_2023postBPix.txt", "/eos/user/d/diegof/cmt/FeaturePlot/GE2023_config/cat_preselection_2023/biasMap_postBPix/root/kappa_"+ region +"_0.0__pg_2023_full.root", "_postBPix", false, region, fOut); // 2023postBPix
   }
 
   fclose(fOut);
-  
+
 }

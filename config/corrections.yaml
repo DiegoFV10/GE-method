@@ -1,11 +1,19 @@
-puweight:
-    name: puWeightRDF
-    path: Corrections.LUM.puWeight
+# PUweight from ROOT files:
+#    name: puWeightRDF
+#    path: Corrections.LUM.puWeight
+#    parameters:
+#        isMC: self.dataset.process.isMC
+#        year: self.config.year
+#        isUL: self.dataset.has_tag('ul')
+#        postEE: self.dataset.has_tag('postEE')
+
+PUweight from correctionlib:
+    name: puWeightRun3
+    path: Corrections.LUM.puWeightCor
     parameters:
         isMC: self.dataset.process.isMC
         year: self.config.year
-        isUL: self.dataset.has_tag('ul')
-        postEE: self.dataset.has_tag('postEE')
+        runPeriod: self.dataset.runPeriod
 
 Muon_SFs:
     name: MuonSF
@@ -13,8 +21,7 @@ Muon_SFs:
     parameters:
         isMC: self.dataset.process.isMC
         year: self.config.year
-        preVFP: self.dataset.has_tag('preVFP')
-        postEE: self.dataset.has_tag('postEE')
+        runPeriod: self.dataset.runPeriod
 
 # ONLY FOR RUN 2 UL
 #ptZ reweight:

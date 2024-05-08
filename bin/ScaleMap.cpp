@@ -46,7 +46,7 @@
 #include "TPaveLabel.h"
 
 
-void DrawMap(string biasMap, string year, string VFP=""){
+void DrawMap(string biasMap, string year, string runPeriod=""){
   
   /// Create TH2 with the Map ///
 
@@ -122,15 +122,21 @@ void DrawMap(string biasMap, string year, string VFP=""){
     title = "#bf{CMS} #it{Work in progress}                     2018, 59.7 fb^{-1} (13 TeV)";
   else if (year == "UL17")
     title = "#bf{CMS} #it{Work in progress}                     2017, 41.5 fb^{-1} (13 TeV)";
-  else if (year == "UL16" && VFP == "preVFP")
+  else if (year == "UL16" && runPeriod == "preVFP")
     title = "#bf{CMS} #it{Work in progress}              2016 preVFP, 19.5 fb^{-1} (13 TeV)";
-  else if (year == "UL16" && VFP == "postVFP")
+  else if (year == "UL16" && runPeriod == "postVFP")
     title = "#bf{CMS} #it{Work in progress}             2016 postVFP, 16.8 fb^{-1} (13 TeV)";
 
-  else if (year == "2022" && VFP == "preEE")
-    title = "#bf{CMS} #it{Work in progress}              2022 preEE, 8.1 fb^{-1} (13.6 TeV)";
-  else
-    title = "#bf{CMS} #it{Work in progress}            2022 postEE, 27.0 fb^{-1} (13.6 TeV)";
+  else if (year == "2022" && runPeriod == "preEE")
+    title = "#bf{CMS} #it{Work in progress}              2022 preEE, 8.0 fb^{-1} (13.6 TeV)";
+  else if (year == "2022" && runPeriod == "postEE")
+    title = "#bf{CMS} #it{Work in progress}            2022 postEE, 26.7 fb^{-1} (13.6 TeV)";
+  else if (year == "2022" && runPeriod == "E")
+    title = "#bf{CMS} #it{Work in progress}                  2022 E, 5.8 fb^{-1} (13.6 TeV)";
+  else if (year == "2023" && runPeriod == "preBPix")
+    title = "#bf{CMS} #it{Work in progress}           2023 preBPix, 17.7 fb^{-1} (13.6 TeV)";
+  else if (year == "2023" && runPeriod == "postBPix")
+    title = "#bf{CMS} #it{Work in progress}           2023 postBPix, 9.5 fb^{-1} (13.6 TeV)";
 
 
   TLatex* preliminary = new TLatex(0.12,0.92, title);
@@ -139,13 +145,13 @@ void DrawMap(string biasMap, string year, string VFP=""){
   preliminary->SetTextSize(0.035);
   preliminary->Draw();
 
-  Map->SaveAs(("png/ScaleMap/"+ year + VFP +"/ScaleMap_"+ year + VFP +".png").c_str());
-  Map->SaveAs(("png/ScaleMap/"+ year + VFP +"/ScaleMap_"+ year + VFP +".pdf").c_str());
-  Map->SaveAs(("png/ScaleMap/"+ year + VFP +"/ScaleMap_"+ year + VFP +".root").c_str());
+  Map->SaveAs(("png/ScaleMap/"+ year + runPeriod +"/ScaleMap_"+ year + runPeriod +".png").c_str());
+  Map->SaveAs(("png/ScaleMap/"+ year + runPeriod +"/ScaleMap_"+ year + runPeriod +".pdf").c_str());
+  Map->SaveAs(("png/ScaleMap/"+ year + runPeriod +"/ScaleMap_"+ year + runPeriod +".root").c_str());
   
 }
 
-void DrawProfile(string biasMap, string year, string VFP=""){
+void DrawProfile(string biasMap, string year, string runPeriod=""){
 
   /// Read the map and set profile ///
 
@@ -235,15 +241,21 @@ void DrawProfile(string biasMap, string year, string VFP=""){
     title = "#bf{CMS} #it{Work in progress}                     2018, 59.7 fb^{-1} (13 TeV)";
   else if (year == "UL17")
     title = "#bf{CMS} #it{Work in progress}                     2017, 41.5 fb^{-1} (13 TeV)";
-  else if (year == "UL16" && VFP == "preVFP")
+  else if (year == "UL16" && runPeriod == "preVFP")
     title = "#bf{CMS} #it{Work in progress}              2016 preVFP, 19.5 fb^{-1} (13 TeV)";
-  else if (year == "UL16" && VFP == "postVFP")
+  else if (year == "UL16" && runPeriod == "postVFP")
     title = "#bf{CMS} #it{Work in progress}             2016 postVFP, 16.8 fb^{-1} (13 TeV)";
 
-  else if (year == "2022" && VFP == "preEE")
-    title = "#bf{CMS} #it{Work in progress}              2022 preEE, 8.1 fb^{-1} (13.6 TeV)";
-  else
-    title = "#bf{CMS} #it{Work in progress}            2022 postEE, 27.0 fb^{-1} (13.6 TeV)";
+  else if (year == "2022" && runPeriod == "preEE")
+    title = "#bf{CMS} #it{Work in progress}              2022 preEE, 8.0 fb^{-1} (13.6 TeV)";
+  else if (year == "2022" && runPeriod == "postEE")
+    title = "#bf{CMS} #it{Work in progress}            2022 postEE, 26.7 fb^{-1} (13.6 TeV)";
+  else if (year == "2022" && runPeriod == "E")
+    title = "#bf{CMS} #it{Work in progress}                  2022 E, 5.8 fb^{-1} (13.6 TeV)";
+  else if (year == "2023" && runPeriod == "preBPix")
+    title = "#bf{CMS} #it{Work in progress}           2023 preBPix, 17.7 fb^{-1} (13.6 TeV)";
+  else if (year == "2023" && runPeriod == "postBPix")
+    title = "#bf{CMS} #it{Work in progress}           2023 postBPix, 9.5 fb^{-1} (13.6 TeV)";
 
   TLatex* preliminary = new TLatex(0.12,0.92, title);
   preliminary->SetNDC();
@@ -251,9 +263,9 @@ void DrawProfile(string biasMap, string year, string VFP=""){
   preliminary->SetTextSize(0.04);
   preliminary->Draw();
 
-  Map->SaveAs(("png/ScaleMap/"+ year + VFP +"/ProfileMap_"+ year + VFP +".png").c_str());
-  Map->SaveAs(("png/ScaleMap/"+ year + VFP +"/ProfileMap_"+ year + VFP +".pdf").c_str());
-  Map->SaveAs(("png/ScaleMap/"+ year + VFP +"/ProfileMap_"+ year + VFP +".root").c_str());
+  Map->SaveAs(("png/ScaleMap/"+ year + runPeriod +"/ProfileMap_"+ year + runPeriod +".png").c_str());
+  Map->SaveAs(("png/ScaleMap/"+ year + runPeriod +"/ProfileMap_"+ year + runPeriod +".pdf").c_str());
+  Map->SaveAs(("png/ScaleMap/"+ year + runPeriod +"/ProfileMap_"+ year + runPeriod +".root").c_str());
 
 }
 
@@ -265,7 +277,10 @@ void ScaleMap(){
   //DrawMap("outBias/UL16postVFP/ScaleMap_results_UL16postVFP.txt", "UL16", "postVFP");
 
   //DrawMap("outBias/2022preEE/ScaleMap_results_2022preEE.txt", "2022", "preEE");
-  DrawMap("outBias/2022postEE/ScaleMap_results_2022postEE.txt", "2022", "postEE");
+  //DrawMap("outBias/2022postEE/ScaleMap_results_2022postEE.txt", "2022", "postEE");
+  DrawMap("outBias/2022postEE/ScaleMap_results_2022E.txt", "2022", "E");
+  //DrawMap("outBias/2023preBPix/ScaleMap_results_2023preBPix.txt", "2023", "preBPix");
+  //DrawMap("outBias/2023postBPix/ScaleMap_results_2023postBPix.txt", "2023", "postBPix");
 
 
   //DrawProfile("outBias/UL18/ScaleMap_results_UL18.txt", "UL18");
@@ -274,6 +289,9 @@ void ScaleMap(){
   //DrawProfile("outBias/UL16postVFP/ScaleMap_results_UL16postVFP.txt", "UL16", "postVFP");
 
   //DrawProfile("outBias/2022preEE/ScaleMap_results_2022preEE.txt", "2022", "preEE");
-  DrawProfile("outBias/2022postEE/ScaleMap_results_2022postEE.txt", "2022", "postEE");
+  //DrawProfile("outBias/2022postEE/ScaleMap_results_2022postEE.txt", "2022", "postEE");
+  DrawProfile("outBias/2022postEE/ScaleMap_results_2022E.txt", "2022", "E");
+  //DrawProfile("outBias/2023preBPix/ScaleMap_results_2023preBPix.txt", "2023", "preBPix");
+  //DrawProfile("outBias/2023postBPix/ScaleMap_results_2023postBPix.txt", "2023", "postBPix");
 
 }
