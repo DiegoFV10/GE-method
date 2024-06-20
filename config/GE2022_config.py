@@ -75,7 +75,7 @@ class Config(base_config):
         self.systematics = self.add_systematics()
         self.default_module_files = self.add_default_module_files()
 
-        self.upper_left_text = "Private work"
+        self.upper_left_text = "Preliminary"
         self.label_size = 1.2
 
     def join_selection_channels(self, selection):
@@ -1439,7 +1439,7 @@ class Config(base_config):
                     units="TeV^{-1}"), )
 
 
-        return ObjectCollection(feature_bias)
+        return ObjectCollection(features)
 
     def add_versions(self):
         versions = {}
